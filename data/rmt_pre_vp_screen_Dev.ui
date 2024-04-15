@@ -182,6 +182,9 @@ border-radius:20px;
          <pointsize>9</pointsize>
         </font>
        </property>
+       <property name="styleSheet">
+        <string notr="true">QTabWidget::pane { border: 1px solid white;}</string>
+       </property>
        <property name="tabShape">
         <enum>QTabWidget::Rounded</enum>
        </property>

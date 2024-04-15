@@ -192,7 +192,7 @@ border-radius:20px;
         </font>
        </property>
        <property name="styleSheet">
-        <string notr="true"/>
+        <string notr="true">QTabWidget::pane { border: 1px solid white;}</string>
        </property>
        <property name="tabShape">
         <enum>QTabWidget::Rounded</enum>
@@ -210,6 +210,9 @@ border-radius:20px;
         <enum>Qt::ElideNone</enum>
        </property>
        <widget class="QWidget" name="tab1">
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
         <attribute name="title">
          <string>Benchmark Model</string>
         </attribute>
@@ -928,6 +931,9 @@ color: rgb(125, 169, 172);
         </widget>
        </widget>
        <widget class="QWidget" name="tab2">
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
         <attribute name="title">
          <string>Alternative Model</string>
         </attribute>
