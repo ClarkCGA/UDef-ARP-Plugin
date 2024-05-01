@@ -62,5 +62,13 @@ UDef-ARP accepts raster map data is either a Geotiff “.tif” or TerrSet “.r
   <img src="data/intro_screen.png" alt="GUI Image">
 </p>
 
+## Issues
+
+### UDef-ARP Processing Scripts
+Issues relating to core UDef-ARP processing scripts (vulnerability_map.py, allocation_tool.py, model_evaluation.py should be addressed at https://github.com/ClarkCGA/UDef-ARP/issues 
+
+### UDef-ARP Plugin
+Issues relating to the functionality of the plugin should be addressed at https://github.com/ClarkCGA/UDef-ARP-Plugin/issues
+
 ## COPYRIGHT AND LICENSE
 ©2023-2024 Clark Labs. This software is free to use and distribute under the terms of the GNU-GLP license.
