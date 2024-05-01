@@ -7,7 +7,7 @@ name=UDef-ARP Plugin
 qgisMinimumVersion=3.0
 description=UDef-ARP for QGIS
 version=1.0
-author=Eli Simonson
+author=Clark Labs / Clark CGA, Eli Simonson
 email=esimonson@clarku.edu
 
 about=<p>This is a modified version of the UDef-ARP repository [<a href="https://github.com/ClarkCGA/UDef-ARP">github.com/ClarkCGA/UDef-ARP</a>] that enables the tools to be fully integrated into QGIS as a plugin.</p>
