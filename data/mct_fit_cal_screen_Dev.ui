@@ -287,7 +287,7 @@ color: rgb(125, 169, 172);
          <string notr="true">font: 10pt&quot;AvenirNext LT Pro Cn&quot;;</string>
         </property>
         <property name="text">
-         <string>Fitted Density Map for the CAL (ha/pixel)</string>
+         <string>Fitted Density for the CAL image (ha/pixel)</string>
         </property>
        </widget>
        <widget class="QLabel" name="label_3">
@@ -303,7 +303,7 @@ color: rgb(125, 169, 172);
          <string notr="true">font: 10pt&quot;AvenirNext LT Pro Cn&quot;;</string>
         </property>
         <property name="text">
-         <string>Mask of the Non-Excluded Jurisdiction (binary map)</string>
+         <string>Mask of the Jurisdiction</string>
         </property>
        </widget>
        <widget class="QLabel" name="label_4">
@@ -319,7 +319,7 @@ color: rgb(125, 169, 172);
          <string notr="true">font: 10pt&quot;AvenirNext LT Pro Cn&quot;;</string>
         </property>
         <property name="text">
-         <string>Map of Deforestation in the CAL (binary map)</string>
+         <string>Deforestation in the CAL image</string>
         </property>
        </widget>
        <widget class="QLabel" name="label_7">
@@ -732,7 +732,7 @@ color: rgb(125, 169, 172);
          <string notr="true">font: 10pt&quot;AvenirNext LT Pro Cn&quot;;</string>
         </property>
         <property name="text">
-         <string>Name for the Plot</string>
+         <string>Output plot filename</string>
         </property>
        </widget>
        <widget class="QLineEdit" name="title_entry">
@@ -837,7 +837,7 @@ color: rgb(125, 169, 172);
          <string notr="true">font: 10pt&quot;AvenirNext LT Pro Cn&quot;;</string>
         </property>
         <property name="text">
-         <string>Name for the Residual Map</string>
+         <string>Output residual image</string>
         </property>
        </widget>
        <widget class="QLineEdit" name="raster_fn_entry">
@@ -869,7 +869,7 @@ color: rgb(125, 169, 172);
          <string notr="true">font: 10pt&quot;AvenirNext LT Pro Cn&quot;;</string>
         </property>
         <property name="text">
-         <string>X-Axis Maximum</string>
+         <string>Set X-Axis Max manually</string>
         </property>
        </widget>
        <widget class="QLineEdit" name="xmax_entry">
@@ -901,7 +901,7 @@ color: rgb(125, 169, 172);
          <string notr="true">font: 10pt&quot;AvenirNext LT Pro Cn&quot;;</string>
         </property>
         <property name="text">
-         <string>Y-Axis Maximum</string>
+         <string>Set Y-Axis Max manually</string>
         </property>
        </widget>
        <widget class="QLineEdit" name="ymax_entry">

@@ -336,7 +336,7 @@ color: rgb(125, 169, 172);
               <string notr="true">font: 10pt&quot;AvenirNext LT Pro Cn&quot;;</string>
              </property>
              <property name="text">
-              <string>Map of Distance from the Forest Edge in CNF (m)</string>
+              <string>Distance from forest edge at start of the CNF</string>
              </property>
             </widget>
             <widget class="QLabel" name="label_4">
@@ -352,7 +352,7 @@ color: rgb(125, 169, 172);
               <string notr="true">font: 10pt&quot;AvenirNext LT Pro Cn&quot;;</string>
              </property>
              <property name="text">
-              <string>Negligible Risk Threshold (NRT) in the HRP (m)</string>
+              <string>Negligible Risk Threshold (NRT) in the HRP</string>
              </property>
             </widget>
             <widget class="QLineEdit" name="nrt_entry">
@@ -669,7 +669,7 @@ color: rgb(125, 169, 172);
               <string notr="true">font: 10pt&quot;AvenirNext LT Pro Cn&quot;;</string>
              </property>
              <property name="text">
-              <string>Name for the Vulnerability Map for the CNF</string>
+              <string>Benchmark vulnerability for the CNF</string>
              </property>
             </widget>
             <widget class="QLineEdit" name="out_fn_entry">
@@ -911,7 +911,7 @@ color: rgb(125, 169, 172);
               <string notr="true">font: 10pt&quot;AvenirNext LT Pro Cn&quot;;</string>
              </property>
              <property name="text">
-              <string>Empirical transition potential [0,1] for the CNF</string>
+              <string>Empirical Transition Potential in the CNF</string>
              </property>
             </widget>
             <widget class="QLabel" name="label_34">
@@ -927,7 +927,7 @@ color: rgb(125, 169, 172);
               <string notr="true">font: 10pt&quot;AvenirNext LT Pro Cn&quot;;</string>
              </property>
              <property name="text">
-              <string>Mask of the Non-Excluded Jurisdiction (binary map)</string>
+              <string>Mask of the non-excluded jurisdiction</string>
              </property>
             </widget>
             <widget class="QPushButton" name="fd_button_2">
@@ -1725,7 +1725,7 @@ color: rgb(125, 169, 172);
               <string notr="true">font: 10pt&quot;AvenirNext LT Pro Cn&quot;;</string>
              </property>
              <property name="text">
-              <string>Name for the Vulnerability Map for the CNF</string>
+              <string>Alternative vulnerability for the CNF</string>
              </property>
             </widget>
             <widget class="QLineEdit" name="out_fn_entry_2">
@@ -1817,7 +1817,7 @@ color: rgb(125, 169, 172);
               <string notr="true">font: 10pt&quot;AvenirNext LT Pro Cn&quot;;</string>
              </property>
              <property name="text">
-              <string>Mask of the Forest Areas in CNF (binary map)</string>
+              <string>Forest Areas at start of CNF</string>
              </property>
             </widget>
             <widget class="QPushButton" name="fmask_button_2">

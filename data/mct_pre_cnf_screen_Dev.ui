@@ -287,7 +287,7 @@ color: rgb(125, 169, 172);
          <string notr="true">font: 10pt&quot;AvenirNext LT Pro Cn&quot;;</string>
         </property>
         <property name="text">
-         <string>Adjusted Predicted CNF Density Map (ha/pixel)</string>
+         <string>Adjusted Predicted Density in the CNF</string>
         </property>
        </widget>
        <widget class="QLabel" name="label_3">
@@ -303,7 +303,7 @@ color: rgb(125, 169, 172);
          <string notr="true">font: 10pt&quot;AvenirNext LT Pro Cn&quot;;</string>
         </property>
         <property name="text">
-         <string>Mask of the Non-Excluded Jurisdiction (binary map)</string>
+         <string>Mask of the Jurisdiction</string>
         </property>
        </widget>
        <widget class="QLabel" name="label_4">
@@ -319,7 +319,7 @@ color: rgb(125, 169, 172);
          <string notr="true">font: 10pt&quot;AvenirNext LT Pro Cn&quot;;</string>
         </property>
         <property name="text">
-         <string>Mask of the Forest Areas in CAL (binary map)</string>
+         <string>Forest Areas at start of CAL</string>
         </property>
        </widget>
        <widget class="QLabel" name="label_7">
@@ -1672,7 +1672,7 @@ color: rgb(125, 169, 172);
          <string notr="true">font: 10pt&quot;AvenirNext LT Pro Cn&quot;;</string>
         </property>
         <property name="text">
-         <string>Name for the Plot</string>
+         <string>Output plot filename</string>
         </property>
        </widget>
        <widget class="QLineEdit" name="out_fn_entry">
@@ -1799,7 +1799,7 @@ color: rgb(125, 169, 172);
          <string notr="true">font: 10pt&quot;AvenirNext LT Pro Cn&quot;;</string>
         </property>
         <property name="text">
-         <string>Map of Deforestation in the CAL (binary)</string>
+         <string>Deforestation in the CAL</string>
         </property>
        </widget>
        <widget class="QLabel" name="label_10">
@@ -1815,7 +1815,7 @@ color: rgb(125, 169, 172);
          <string notr="true">font: 10pt&quot;AvenirNext LT Pro Cn&quot;;</string>
         </property>
         <property name="text">
-         <string>Name for the Combined Deforestation Review Map</string>
+         <string>Output combined deforestation review image</string>
         </property>
        </widget>
        <widget class="QLabel" name="label_12">
@@ -1831,7 +1831,7 @@ color: rgb(125, 169, 172);
          <string notr="true">font: 10pt&quot;AvenirNext LT Pro Cn&quot;;</string>
         </property>
         <property name="text">
-         <string>Map of Deforestation in the CNF (binary)</string>
+         <string>Deforestation in the CNF</string>
         </property>
        </widget>
        <widget class="QPushButton" name="fmask_button">
@@ -1863,7 +1863,7 @@ color: rgb(125, 169, 172);
          <string notr="true">font: 10pt&quot;AvenirNext LT Pro Cn&quot;;</string>
         </property>
         <property name="text">
-         <string>Name for the Residual Map</string>
+         <string>Output residual image</string>
         </property>
        </widget>
        <widget class="QLineEdit" name="raster_fn_entry">
@@ -1895,7 +1895,7 @@ color: rgb(125, 169, 172);
          <string notr="true">font: 10pt&quot;AvenirNext LT Pro Cn&quot;;</string>
         </property>
         <property name="text">
-         <string>X-Axis Maximum</string>
+         <string>Set X-Axis Max</string>
         </property>
        </widget>
        <widget class="QLineEdit" name="xmax_entry">
@@ -1927,7 +1927,7 @@ color: rgb(125, 169, 172);
          <string notr="true">font: 10pt&quot;AvenirNext LT Pro Cn&quot;;</string>
         </property>
         <property name="text">
-         <string>Y-Axis Maximum</string>
+         <string>Set Y-Axis Max</string>
         </property>
        </widget>
        <widget class="QLineEdit" name="ymax_entry">

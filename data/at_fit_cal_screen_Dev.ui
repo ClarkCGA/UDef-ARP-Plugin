@@ -324,7 +324,7 @@ color: rgb(125, 169, 172);
           <string notr="true">font: 10pt&quot;AvenirNext LT Pro Cn&quot;;</string>
          </property>
          <property name="text">
-          <string>Map of Administrative Divisions</string>
+          <string>Administrative Divisions image</string>
          </property>
         </widget>
         <widget class="QLabel" name="label_4">
@@ -340,7 +340,7 @@ color: rgb(125, 169, 172);
           <string notr="true">font: 10pt&quot;AvenirNext LT Pro Cn&quot;;</string>
          </property>
          <property name="text">
-          <string>Vulnerability Map for the CAL (previous step)</string>
+          <string>Vulnerability image for the CAL (previous step)</string>
          </property>
         </widget>
         <widget class="QLabel" name="label_6">
@@ -356,7 +356,7 @@ color: rgb(125, 169, 172);
           <string notr="true">font: 10pt&quot;AvenirNext LT Pro Cn&quot;;</string>
          </property>
          <property name="text">
-          <string>Map of Deforestation in the CAL (binary map)</string>
+          <string>Deforestation in the CAL</string>
          </property>
         </widget>
         <widget class="QPushButton" name="municipality_button">
@@ -518,7 +518,7 @@ color: rgb(125, 169, 172);
           <string notr="true">font: 10pt&quot;AvenirNext LT Pro Cn&quot;;</string>
          </property>
          <property name="text">
-          <string>Name for the Modeling Region Map in the CAL</string>
+          <string>Modeling Regions in the CAL</string>
          </property>
         </widget>
         <widget class="QLabel" name="label_10">
@@ -534,7 +534,7 @@ color: rgb(125, 169, 172);
           <string notr="true">font: 10pt&quot;AvenirNext LT Pro Cn&quot;;</string>
          </property>
          <property name="text">
-          <string>Name for the Relative Frequency Table (.csv)</string>
+          <string>Relative Frequency Table for the CAL</string>
          </property>
         </widget>
         <widget class="QLabel" name="label_9">
@@ -550,7 +550,7 @@ color: rgb(125, 169, 172);
           <string notr="true">font: 10pt&quot;AvenirNext LT Pro Cn&quot;;</string>
          </property>
          <property name="text">
-          <string>Name for the Fitted Density Map in the CAL</string>
+          <string>Fitted Density in the CAL</string>
          </property>
         </widget>
         <widget class="QLineEdit" name="image1_entry">
