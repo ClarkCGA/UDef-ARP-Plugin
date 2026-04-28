@@ -148,10 +148,14 @@ class AllocationTool(QObject):
                                 'Average Deforestation(pixel)': [0]})
         merged_df = pd.concat([new_row, merged_df]).reset_index(drop=True)
 
-        # Using numpy.searchsorted() to assign values to 'id'
+        # Map bin IDs to relative frequencies using a flattened lookup, then reshape to raster shape.
+        # This avoids passing a 2D raster array into pandas searchsorted (which expects 1D input).
         df_sorted = merged_df.sort_values('ID')
-        sorted_indices = df_sorted['ID'].searchsorted(tabulation_bin_id_masked)
-        relative_frequency_arr = tabulation_bin_id_masked[:] = df_sorted['Average Deforestation(pixel)'].values[sorted_indices]
+        id_values = df_sorted['ID'].to_numpy()
+        rf_values = df_sorted['Average Deforestation(pixel)'].to_numpy(dtype=np.float32)
+        bin_ids_flat = tabulation_bin_id_masked.ravel()
+        sorted_indices = np.searchsorted(id_values, bin_ids_flat)
+        relative_frequency_arr = rf_values[sorted_indices].reshape(tabulation_bin_id_masked.shape)
 
         # Calculate areal_resolution_of_map_pixels
         in_ds4 = gdal.Open(risk30_hrp)
@@ -213,10 +217,14 @@ class AllocationTool(QObject):
                                 'Average Deforestation(pixel)': [0]})
         merged_df = pd.concat([new_row, merged_df]).reset_index(drop=True)
 
-        # Using numpy.searchsorted() to assign values to 'id'
+        # Map bin IDs to relative frequencies using a flattened lookup, then reshape to raster shape.
+        # This avoids passing a 2D raster array into pandas searchsorted (which expects 1D input).
         df_sorted = merged_df.sort_values('ID')
-        sorted_indices = df_sorted['ID'].searchsorted(tabulation_bin_id_VP_masked)
-        relative_frequency_arr = tabulation_bin_id_VP_masked[:] = df_sorted['Average Deforestation(pixel)'].values[sorted_indices]
+        id_values = df_sorted['ID'].to_numpy()
+        rf_values = df_sorted['Average Deforestation(pixel)'].to_numpy(dtype=np.float32)
+        bin_ids_flat = tabulation_bin_id_VP_masked.ravel()
+        sorted_indices = np.searchsorted(id_values, bin_ids_flat)
+        relative_frequency_arr = rf_values[sorted_indices].reshape(tabulation_bin_id_VP_masked.shape)
 
         # Calculate areal_resolution_of_map_pixels
         in_ds4 = gdal.Open(risk30_vp)
@@ -325,37 +333,6 @@ class AllocationTool(QObject):
 
         return
 
-    def adjusted_prediction_density_map_annual (self, prediction_density_arr, risk30_vp, AR, out_fn2, time):
-        '''
-        Create adjusted prediction density map for annual
-        :param prediction_density_arr:modeled deforestation (MD)
-        :param risk30_vp: risk30_vp image
-        :param AR:Adjustment Ratio
-        :param out_fn2: user input
-        :return:
-        '''
-
-        # Calculate the maximum density
-        # Calculate areal_resolution_of_map_pixels
-        in_ds4 = gdal.Open(risk30_vp)
-        P1 = in_ds4.GetGeoTransform()[1]
-        P2 = abs(in_ds4.GetGeoTransform()[5])
-        maximum_density = P1 * P2 / 10000
-
-        # Adjusted_Prediction_Density_Map = AR x Prediction_Density _Map
-        adjusted_prediction_density_arr=AR*prediction_density_arr
-
-        # Reclassify all pixels greater than the maximum (e.g., 0.09) to be the maximum
-        adjusted_prediction_density_arr[adjusted_prediction_density_arr > maximum_density] = maximum_density
-
-        # Convert the result back to an annual rate by dividing by the number of years in the VP
-        adjusted_prediction_density_arr_annual=adjusted_prediction_density_arr/time
-
-        # Create imagery
-        self.array_to_image(risk30_vp, out_fn2, adjusted_prediction_density_arr_annual, gdal.GDT_Float32, -1)
-
-        return
-
     def replace_ref_system(self, in_fn, out_fn):
         '''
          RST raster format: correct reference system name in rdc file
@@ -363,27 +340,48 @@ class AllocationTool(QObject):
          :param out_fn: rst raster file
         '''
         if out_fn.split('.')[-1] == 'rst':
-            read_file_name, _ = os.path.splitext(in_fn)
-            write_file_name, _ = os.path.splitext(out_fn)
-            temp_file_path = 'rdc_temp.rdc'
+            if in_fn.split('.')[-1] == 'rst':
+                read_file_name, _ = os.path.splitext(in_fn)
+                write_file_name, _ = os.path.splitext(out_fn)
+                temp_file_path = 'rdc_temp.rdc'
 
-            with open(read_file_name + '.rdc', 'r') as read_file:
-                for line in read_file:
-                    if line.startswith("ref. system :"):
-                        correct_name=line
-                        break
+                with open(read_file_name + '.rdc', 'r') as read_file:
+                    for line in read_file:
+                        if line.startswith("ref. system :"):
+                            correct_name = line
+                            break
 
-            if correct_name:
+                if correct_name:
+                    with open(write_file_name + '.rdc', 'r') as read_file, open(temp_file_path, 'w') as write_file:
+                        for line in read_file:
+                            if line.startswith("ref. system :"):
+                                write_file.write(correct_name)
+                            else:
+                                write_file.write(line)
+
+                    # Move the temp file to replace the original
+                    shutil.move(temp_file_path, write_file_name + '.rdc')
+
+            elif in_fn.split('.')[-1] == 'tif':
+                # Read projection information from the .tif file using GDAL
+                dataset = gdal.Open(in_fn)
+                projection = dataset.GetProjection()
+                dataset = None
+
+                # Extract the reference system name from the wkt projection
+                ref_system_name = projection.split('PROJCS["')[1].split('"')[0]
+
+                write_file_name, _ = os.path.splitext(out_fn)
+                temp_file_path = 'rdc_temp.rdc'
+
                 with open(write_file_name + '.rdc', 'r') as read_file, open(temp_file_path, 'w') as write_file:
                     for line in read_file:
                         if line.startswith("ref. system :"):
-                            write_file.write(correct_name)
+                            write_file.write(f"ref. system : {ref_system_name}\n")
                         else:
                             write_file.write(line)
 
-                # Move the temp file to replace the original
                 shutil.move(temp_file_path, write_file_name + '.rdc')
-
 
     def execute_workflow_fit(self, directory,risk30_hrp,municipality, deforestation_hrp, csv_name, out_fn1, out_fn2):
         '''
@@ -418,11 +416,11 @@ class AllocationTool(QObject):
         self.progress_updated.emit(30)
 
         # Check modeling region IDs present in the prediction stage but absent in the fitting stage
-        id_difference = self.check_modeling_region_ids(csv, out_fn1)
+        id_difference, pre_model_region_id = self.check_modeling_region_ids(csv, out_fn1)
 
         # If there are missing bins, calculate the relative frequency and create a new csv file
         if id_difference.size > 0:
-            self.calculate_missing_bins_rf(id_difference, csv)
+            csv = self.calculate_missing_bins_rf(id_difference, csv,pre_model_region_id)
 
         self.progress_updated.emit(40)
 
@@ -438,6 +436,7 @@ class AllocationTool(QObject):
         while AR > 1.00001 and iteration_count <= max_iterations:
             new_prediction_density_arr = self.adjusted_prediction_density_array(prediction_density_arr, risk30_vp, AR)
             AR = self.calculate_adjustment_ratio_cnf(new_prediction_density_arr, deforestation_cnf)
+            prediction_density_arr=new_prediction_density_arr
             iteration_count += 1
         if iteration_count <= int(max_iterations):
             selected_density_arr = new_prediction_density_arr if new_prediction_density_arr is not None else prediction_density_arr
@@ -449,9 +448,9 @@ class AllocationTool(QObject):
 
         self.progress_updated.emit(100)
 
-        return id_difference
+        return id_difference , iteration_count
 
-    def execute_workflow_vp(self, directory,max_iterations, csv, municipality, expected_deforestation, risk30_vp, out_fn1, out_fn2, time):
+    def execute_workflow_vp(self, directory,max_iterations, csv, municipality, expected_deforestation, risk30_vp, out_fn1, out_fn2):
         '''
         Create workflow function for VP
         :param max_iterations: maximum number of iterations
@@ -464,11 +463,11 @@ class AllocationTool(QObject):
         self.progress_updated.emit(30)
 
         # Check modeling region IDs present in the prediction stage but absent in the fitting stage
-        id_difference = self.check_modeling_region_ids(csv, out_fn1)
+        id_difference, pre_model_region_id = self.check_modeling_region_ids(csv, out_fn1)
 
         # If there are missing bins, calculate the relative frequency and create a new csv file
         if id_difference.size > 0:
-            self.calculate_missing_bins_rf(id_difference, csv)
+            csv=self.calculate_missing_bins_rf(id_difference, csv,pre_model_region_id)
 
         self.progress_updated.emit(40)
 
@@ -484,18 +483,19 @@ class AllocationTool(QObject):
         while AR > 1.00001 and iteration_count <= max_iterations:
             new_prediction_density_arr = self.adjusted_prediction_density_array(prediction_density_arr, risk30_vp, AR)
             AR = self.calculate_adjustment_ratio(new_prediction_density_arr, expected_deforestation)
+            prediction_density_arr = new_prediction_density_arr
             iteration_count += 1
             # Emitting progress based on the current iteration_count and max_iterations
         if iteration_count <= int(max_iterations):
             selected_density_arr = new_prediction_density_arr if new_prediction_density_arr is not None else prediction_density_arr
-            self.adjusted_prediction_density_map_annual(selected_density_arr, risk30_vp, AR, out_fn2, time)
+            self.adjusted_prediction_density_map(selected_density_arr, risk30_vp, AR, out_fn2)
             self.replace_ref_system(municipality, out_fn2)
         else:
             print("Maximum number of iterations reached. Please reset the maximum number of iterations.")
 
         self.progress_updated.emit(100)
 
-        return id_difference
+        return id_difference, iteration_count
 
     def check_modeling_region_ids(self, csv, out_fn):
         '''
@@ -509,14 +509,15 @@ class AllocationTool(QObject):
         pre_model_region_id = np.unique(pre_model_region_arr[pre_model_region_arr != 0])
         id_difference = np.setdiff1d(pre_model_region_id, fit_model_region_id)
 
-        return id_difference
+        return id_difference, pre_model_region_id
 
-    def calculate_missing_bins_rf (self, id_difference, csv):
+    def calculate_missing_bins_rf (self, id_difference, csv, pre_model_region_id):
         '''
         If one or more empty bins are found, compute the jurisdiction-wide weighted average of relative frequencies for
         missing bins and create a new csv file
         :param csv: csv file of relative frequency in the fitting stage
         :param id_difference: A set of modeling region IDs np array that exist only in the prediction stage
+        :param pre_model_region_id: Prediction modeling region ID np array
         :return
         '''
         # Convert modeling region ids to vulnerability zone id
@@ -554,8 +555,13 @@ class AllocationTool(QObject):
         # Drop column 'v_zone'
         df_new=df_new.drop(['v_zone'], axis=1)
 
-        # Copy the original csv file copy and rename it to csv_orig
-        shutil.copyfile(csv, csv.split('.')[0] + '_orig' + '.csv')
+        # Read CNF Modeling Region ID
+        mr_cnf_df=pd.DataFrame(pre_model_region_id, columns=['ID'])
+        df_new_cnf=pd.merge(df_new, mr_cnf_df, on='ID', how='inner')
+
 
         # Save the new result to csv
-        df_new.to_csv(csv, index=False)
+        base, ext = os.path.splitext(csv)
+        new_csv = f"{base}_adjusted_for_prediction{ext}"
+        df_new_cnf.to_csv(new_csv, index=False)
+        return new_csv
