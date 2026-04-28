@@ -348,6 +348,7 @@ class RMT_FIT_CAL_SCREEN(QtWidgets.QDialog, FORM_CLASS1):
             NRT = self.vulnerability_map.nrt_calculation(self.in_fn, self.deforestation_hrp, self.mask)
             # Update the central data store
             central_data_store.NRT = NRT
+            central_data_store.mask = self.mask
 
             QMessageBox.information(self, "Processing Completed", f"Processing completed!\nNRT is: {NRT}")
 
@@ -426,7 +427,15 @@ class RMT_FIT_CAL_SCREEN(QtWidgets.QDialog, FORM_CLASS1):
 
         try:
             self.vulnerability_map.set_working_directory(directory)
-            mask_arr = self.vulnerability_map.geometric_classification(self.in_fn, NRT, n_classes)
+            try:
+                self.mask = self.mask_entry.currentLayer().source()
+            except Exception:
+                self.mask = self.mask_entry.currentText()
+            mask = self.mask if self.mask else central_data_store.mask
+            if not mask:
+                QMessageBox.critical(self, "Error", "Please select the jurisdiction mask or calculate NRT first.")
+                return
+            mask_arr = self.vulnerability_map.geometric_classification(self.in_fn, NRT, n_classes, mask)
             self.vulnerability_map.array_to_image(self.in_fn, out_fn, mask_arr, gdal.GDT_Int16, -1)
             self.vulnerability_map.replace_ref_system(self.in_fn, out_fn)
 
@@ -1201,7 +1210,11 @@ class RMT_PRE_CNF_SCREEN(QtWidgets.QDialog, FORM_CLASS4):
 
         try:
             self.vulnerability_map.set_working_directory(directory)
-            mask_arr = self.vulnerability_map.geometric_classification(self.in_fn, NRT, n_classes)
+            mask = central_data_store.mask
+            if not mask:
+                QMessageBox.critical(self, "Error", "No stored jurisdiction mask found. Run FIT CAL NRT first.")
+                return
+            mask_arr = self.vulnerability_map.geometric_classification(self.in_fn, NRT, n_classes, mask)
             self.vulnerability_map.array_to_image(self.in_fn, out_fn, mask_arr, gdal.GDT_Int16, -1)
             self.vulnerability_map.replace_ref_system(self.in_fn, out_fn)
 
@@ -1502,7 +1515,7 @@ class AT_PRE_CNF_SCREEN(QtWidgets.QDialog, FORM_CLASS5):
         QApplication.processEvents()
 
         try:
-            id_difference = self.allocation_tool.execute_workflow_cnf(directory,
+            id_difference, _ = self.allocation_tool.execute_workflow_cnf(directory,
                                                             self.max_iterations, self.csv,
                                                             self.municipality,
                                                             self.deforestation_cnf,
@@ -2018,7 +2031,11 @@ class RMT_FIT_HRP_SCREEN(QtWidgets.QDialog, FORM_CLASS7):
 
         try:
             self.vulnerability_map.set_working_directory(directory)
-            mask_arr = self.vulnerability_map.geometric_classification(self.in_fn, NRT, n_classes)
+            mask = central_data_store.mask
+            if not mask:
+                QMessageBox.critical(self, "Error", "No stored jurisdiction mask found. Run FIT CAL NRT first.")
+                return
+            mask_arr = self.vulnerability_map.geometric_classification(self.in_fn, NRT, n_classes, mask)
             self.vulnerability_map.array_to_image(self.in_fn, out_fn, mask_arr, gdal.GDT_Int16, -1)
             self.vulnerability_map.replace_ref_system(self.in_fn, out_fn)
 
@@ -2526,7 +2543,11 @@ class RMT_PRE_VP_SCREEN(QtWidgets.QDialog, FORM_CLASS9):
 
         try:
             self.vulnerability_map.set_working_directory(directory)
-            mask_arr = self.vulnerability_map.geometric_classification(self.in_fn, NRT, n_classes)
+            mask = central_data_store.mask
+            if not mask:
+                QMessageBox.critical(self, "Error", "No stored jurisdiction mask found. Run FIT CAL NRT first.")
+                return
+            mask_arr = self.vulnerability_map.geometric_classification(self.in_fn, NRT, n_classes, mask)
             self.vulnerability_map.array_to_image(self.in_fn, out_fn, mask_arr, gdal.GDT_Int16, -1)
             self.vulnerability_map.replace_ref_system(self.in_fn, out_fn)
 
@@ -2671,7 +2692,6 @@ class AT_PRE_VP_SCREEN(QtWidgets.QDialog, FORM_CLASS10):
         self.risk30_vp = None
         self.expected_deforestation = None
         self.max_iterations = None
-        self.time = None
         self.image1 = None
         self.image2 = None
         self.iteration_entry.setPlaceholderText('The suggestion max iteration number is 5')
@@ -2802,16 +2822,6 @@ class AT_PRE_VP_SCREEN(QtWidgets.QDialog, FORM_CLASS10):
             QMessageBox.critical(self, "Error", "Max iteration value should be a valid number!")
             return
 
-        time = self.year_entry.text()
-        if not time:
-            QMessageBox.critical(self, "Error", "Please enter the number of years in the VP! ")
-            return
-        try:
-            self.time = int(time)
-        except ValueError:
-            QMessageBox.critical(self, "Error", "The number of years in the VP should be a valid number!")
-            return
-
         # Show "Processing" message
         processing_message = "Processing data..."
         self.progressDialog = QProgressDialog(processing_message, None, 0, 100, self)
@@ -2829,12 +2839,11 @@ class AT_PRE_VP_SCREEN(QtWidgets.QDialog, FORM_CLASS10):
         QApplication.processEvents()
 
         try:
-            id_difference = self.allocation_tool.execute_workflow_vp(directory, self.max_iterations,
+            id_difference, _ = self.allocation_tool.execute_workflow_vp(directory, self.max_iterations,
                                                                            self.csv,
                                                                            self.municipality,
                                                                            self.expected_deforestation,
-                                                                           self.risk30_vp, out_fn1,out_fn2,
-                                                                           self.time)
+                                                                           self.risk30_vp, out_fn1, out_fn2)
 
             if self.checkBox.isChecked():
                 basename1 = os.path.splitext(os.path.basename(out_fn1))[0]
@@ -3039,6 +3048,7 @@ class CentralDataStore:
     def __init__(self):
         self.NRT = None
         self.directory = None
+        self.mask = None
 
 class MapChecker:
     def __init__(self):
