@@ -14,6 +14,8 @@ import pandas as pd
 from PyQt5.QtCore import QObject, pyqtSignal
 import shutil
 from geopandas import GeoDataFrame
+import plotly.graph_objects as go
+import plotly.io as pio
 
 # GDAL exceptions
 gdal.UseExceptions()
@@ -77,25 +79,47 @@ class ModelEvaluation(QObject):
          :param out_fn: rst raster file
         '''
         if out_fn.split('.')[-1] == 'rst':
-            read_file_name, _ = os.path.splitext(in_fn)
-            write_file_name, _ = os.path.splitext(out_fn)
-            temp_file_path = 'rdc_temp.rdc'
+            if in_fn.split('.')[-1] == 'rst':
+                read_file_name, _ = os.path.splitext(in_fn)
+                write_file_name, _ = os.path.splitext(out_fn)
+                temp_file_path = 'rdc_temp.rdc'
 
-            with open(read_file_name + '.rdc', 'r') as read_file:
-                for line in read_file:
-                    if line.startswith("ref. system :"):
-                        correct_name=line
-                        break
+                with open(read_file_name + '.rdc', 'r') as read_file:
+                    for line in read_file:
+                        if line.startswith("ref. system :"):
+                            correct_name = line
+                            break
 
-            if correct_name:
+                if correct_name:
+                    with open(write_file_name + '.rdc', 'r') as read_file, open(temp_file_path, 'w') as write_file:
+                        for line in read_file:
+                            if line.startswith("ref. system :"):
+                                write_file.write(correct_name)
+                            else:
+                                write_file.write(line)
+
+                    # Move the temp file to replace the original
+                    shutil.move(temp_file_path, write_file_name + '.rdc')
+
+            elif in_fn.split('.')[-1] == 'tif':
+                # Read projection information from the .tif file using GDAL
+                dataset = gdal.Open(in_fn)
+                projection = dataset.GetProjection()
+                dataset = None
+
+                # Extract the reference system name from the wkt projection
+                ref_system_name = projection.split('PROJCS["')[1].split('"')[0]
+
+                write_file_name, _ = os.path.splitext(out_fn)
+                temp_file_path = 'rdc_temp.rdc'
+
                 with open(write_file_name + '.rdc', 'r') as read_file, open(temp_file_path, 'w') as write_file:
                     for line in read_file:
                         if line.startswith("ref. system :"):
-                            write_file.write(correct_name)
+                            write_file.write(f"ref. system : {ref_system_name}\n")
                         else:
                             write_file.write(line)
 
-                # Move the temp file to replace the original
                 shutil.move(temp_file_path, write_file_name + '.rdc')
 
     def replace_legend(self, out_fn):
@@ -135,39 +159,12 @@ class ModelEvaluation(QObject):
         spatial_ref.ImportFromWkt(projection)
 
         # Create a temporary shapefile to store all polygons
-        temp_layername = "TEMP_POLYGONIZED"
+        temp_layername = "POLYGONIZED_MASK"
         driver = ogr.GetDriverByName("ESRI Shapefile")
         temp_ds = driver.CreateDataSource(temp_layername + ".shp")
         temp_layer = temp_ds.CreateLayer(temp_layername, srs=spatial_ref)
         gdal.Polygonize(in_band, in_band, temp_layer, -1, [], callback=None)
         self.progress_updated.emit(20)
-
-        features = [(feature.GetGeometryRef().GetArea(), feature) for feature in temp_layer]
-        largest_polygon = max(features, key=lambda item: item[0])[1]
-
-        # Fetch the geometry of the largest feature
-        largest_polygon_geom = largest_polygon.GetGeometryRef().Clone()
-
-        # Close the temporary data source
-        temp_ds.Destroy()
-
-        # Create the final shapefile to store the largest polygon
-        final_layername = "POLYGONIZED_MASK"
-        final_ds = driver.CreateDataSource(final_layername + ".shp")
-        final_layer = final_ds.CreateLayer(final_layername, srs=spatial_ref, geom_type=ogr.wkbPolygon)
-
-        # Create a new feature
-        feature_defn = final_layer.GetLayerDefn()
-        out_feature = ogr.Feature(feature_defn)
-        out_feature.SetGeometry(largest_polygon_geom)
-
-        # Add the feature to the final layer
-        final_layer.CreateFeature(out_feature)
-
-        # Cleanup
-        out_feature = None
-        final_ds.Destroy()
-
         return
 
     def bbox_to_pixel_offsets(self,gt, bbox):
@@ -332,7 +329,7 @@ class ModelEvaluation(QObject):
          :param area_percentile_threshold: area percentile threshold
          :return  thiessen_gdf: result dataframe
         '''
-        thiessen_gdf = gpd.overlay(full_voronoi_grid, area_mask, how="intersection")
+        thiessen_gdf = gpd.overlay(full_voronoi_grid, area_mask, how="intersection", keep_geom_type=False)
         # get area of each polygon
         thiessen_gdf["area"] = thiessen_gdf.area
 
@@ -382,8 +379,6 @@ class ModelEvaluation(QObject):
         coords = np.array(points_df['coords'].tolist())
 
         ## Create thiessen polygon
-        polygon = mask_df.geometry.unary_union
-
         vor = Voronoi(points=coords)
 
         # Polygonize the line ridge is not infinity
@@ -396,11 +391,8 @@ class ModelEvaluation(QObject):
         voronois = gpd.GeoDataFrame(geometry=gpd.GeoSeries(polys), crs=mask_df.crs)
         self.progress_updated.emit(30)
 
-        # Convert the study area to GeoDataFrame.
-        polydf = gpd.GeoDataFrame(geometry=[polygon], crs=mask_df.crs)
-
         # Ensure Thiessen Polygon cells retain 99.9% of maximum size after intersection with study area
-        thiessen_gdf = self.remove_edge_cells(voronois, polydf, 0.999)
+        thiessen_gdf = self.remove_edge_cells(voronois, mask_df, 0.999)
 
         self.progress_updated.emit(40)
 
@@ -484,7 +476,7 @@ class ModelEvaluation(QObject):
 
         deforestation_arr[arr_def_cnf == 1] = 3
         deforestation_arr[(arr_def_cnf == 0) & (arr_def_cal == 1)] = 2
-        deforestation_arr[(arr_def_cnf == 0) & (arr_def_cal == 0) & (fmask == 1)] = 1
+        deforestation_arr[(arr_def_cnf == 0) & (arr_def_cal == 0) & (arr_fmask == 1)] = 1
 
         #write deforestation_map
         self.array_to_image(fmask, out_fn_def, deforestation_arr, gdal.GDT_Int16, -1)
@@ -507,51 +499,9 @@ class ModelEvaluation(QObject):
         sns.set()
 
         # prepare the X/Y data
-        X = np.array(clipped_gdf['ActualDef'], dtype=np.float64)
-        Y = np.array(clipped_gdf['PredDef'], dtype=np.float64)
-
-        ## Perform linear regression
-        slope, intercept, _, _, _ = stats.linregress(X, Y)
-
-        # Create the equation string
-        equation = f'Y = {slope:.4f} * X + {intercept:.2f}'
-
-        # Calculate the trend line
-        trend_line = slope * X + intercept
-
-        ## Calculate R square
-        # Get the correlation coefficient
-        r = np.corrcoef(X, Y)[0, 1]
-        # Square the correlation coefficient
-        r_squared = r ** 2
-
-        ##Calculate MedAE
-        distance_arr = [abs(X[i] - Y[i]) for i in range(len(X))]
-        MedAE = np.median(distance_arr)
-
-        ## Calculate MedAE percent
-        MedAE_percent = (MedAE / int(grid_area)) * 100
-
-        # Set the figure size
-        plt.figure(figsize=(8, 6))
-
-        # Create a scatter plot
-        plt.scatter(clipped_gdf['ActualDef'], clipped_gdf['PredDef'], color='steelblue', edgecolors='white', linewidth=1.0, s=50)
-
-        # Add labels and title
-        plt.xlabel('Actual Deforestation (ha)', color='black', fontweight='bold', labelpad=10)
-        plt.ylabel('Predicted Deforestation (ha)', color='black', fontweight='bold', labelpad=10)
-        plt.title(title, color='firebrick', fontweight='bold', fontsize=20, pad=20)
-
-        # Plot the trend line
-        plt.plot(X, trend_line, color='mediumseagreen', linestyle='-', label='Best Fit Line')
-
-        # Plot a 1-to-1 line
-        plt.plot([0, max(clipped_gdf['ActualDef'])], [0, max(clipped_gdf['ActualDef'])], color='crimson', linestyle='--',
-                 label='1:1 Line')
-
-        # Add a legend in the bottom right position
-        plt.legend(loc='lower right')
+        X = np.array(clipped_gdf['ActualDef'], dtype=np.float32)
+        Y = np.array(clipped_gdf['PredDef'], dtype=np.float32)
+        ids = np.asarray(clipped_gdf["ID"])
 
         # Set a proportion to extend the limits
         extension_f = 0.1
@@ -567,6 +517,88 @@ class ModelEvaluation(QObject):
         else:
             ymax = float(ymax)
 
+        # Set a new X range from 0 to the xmax
+        X_extended = np.linspace(0, xmax, 500)
+
+        ## Perform linear regression
+        slope, intercept, _, _, _ = stats.linregress(X, Y)
+
+        # Create the equation string
+        equation = f'Y = {slope:.4f} * X + {intercept:.2f}'
+
+        # Calculate the trend line
+        trend_line = slope * X_extended + intercept
+
+        # 1-to-1 Line
+        one_to_one_line = X_extended
+
+        ## Calculate R square
+        # Get the correlation coefficient
+        r = np.corrcoef(X, Y)[0, 1]
+        # Square the correlation coefficient
+        r_squared = r ** 2
+
+        ##Calculate MedAE
+        distance_arr = [abs(X[i] - Y[i]) for i in range(len(X))]
+        MedAE = np.median(distance_arr)
+
+        ## Calculate MedAE percent
+        MedAE_percent = (MedAE / int(grid_area)) * 100
+
+        ## Calculate MAE
+        MAE=np.sum(distance_arr)/len(X)
+        MAE_percent = (MAE / int(grid_area)) * 100
+
+        ## Calculate the IoU
+        # agreement=intersection: Minimum of actual and predicted deforestation for each dot and add them all
+        agree_arr = [min(X[i],Y[i]) for i in range(len(X))]
+        agree = np.sum(agree_arr)   
+
+        # union
+        union_arr = [max(X[i],Y[i]) for i in range(len(X))]
+        union = np.sum(union_arr)
+
+        # IoU
+        iou = 0 if union == 0 else agree / union * 100
+
+        ## Calculate the Difference
+        # Absolute value of predicted deforestation minus actual deforestation of each point and add them all
+        difference=np.sum(distance_arr)
+
+        # Set the figure size
+        plt.figure(figsize=(8, 6))
+
+        # Create a scatter plot
+        plt.scatter(clipped_gdf['ActualDef'], clipped_gdf['PredDef'], color='steelblue', alpha=0.5, linewidth=1.0, s=50)
+
+        # Add labels and title
+        plt.xlabel('Actual Deforestation (ha)', color='black', fontweight='bold', labelpad=10)
+        plt.ylabel('Predicted Deforestation (ha)', color='black', fontweight='bold', labelpad=10)
+        plt.title(title, color='firebrick', fontweight='bold', fontsize=20, pad=20)
+
+        # Plot the trend line
+        plt.plot(X_extended, trend_line, color='mediumseagreen', linestyle='-', label='OLS Line')
+
+        # Plot a 1-to-1 line
+        plt.plot(X_extended, one_to_one_line, color='crimson', linestyle='--',label='1:1 Line')
+
+        ## Theil-Sen Regressor
+        # Fit Theil-Sen Regressor
+        # Compute Theil-Sen estimator
+        ts_slope, ts_intercept, _, _ = stats.theilslopes(Y, X)
+
+        # Generate predictions
+        y_pred = ts_slope * X_extended + ts_intercept
+
+        # Equation of the line
+        ts_equation = f'Y = {ts_slope:.4f} * X + {ts_intercept:.2f}'
+
+        # Plot Theil-Sen Line
+        plt.plot(X_extended, y_pred, color='orange', linestyle='-', label='Theil-Sen Line')
+
+        # Add a legend in the bottom right position
+        plt.legend(loc='lower right')
+
         plt.xlim([0, xmax])
         plt.ylim([0, ymax])
 
@@ -575,18 +607,128 @@ class ModelEvaluation(QObject):
         text_y_gap = ymax * 0.05
 
         # Adjust plt texts with the new calculated positions
-        plt.text(text_x_pos, text_y_start_pos, equation, fontsize=11, color='black')
-        plt.text(text_x_pos, text_y_start_pos - text_y_gap, f'Samples = {len(X)}', fontsize=11, color='black')
-        plt.text(text_x_pos, text_y_start_pos - 2 * text_y_gap, f'R^2 = {r_squared:.4f}', fontsize=11, color='black')
-        plt.text(text_x_pos, text_y_start_pos - 3 * text_y_gap, f'MedAE = {MedAE:.2f} ({MedAE_percent:.2f}%)',
+        plt.text(text_x_pos, text_y_start_pos, f'Theil-Sen : {ts_equation}', fontsize=11,
+                 color='black')
+        plt.text(text_x_pos, text_y_start_pos - text_y_gap, f'OLS : {equation}', fontsize=11, color='black')
+        plt.text(text_x_pos, text_y_start_pos - 2 * text_y_gap, f'Samples = {len(X)}', fontsize=11, color='black')
+        plt.text(text_x_pos, text_y_start_pos - 3 * text_y_gap, f'R^2 = {r_squared:.4f}', fontsize=11, color='black')
+        plt.text(text_x_pos, text_y_start_pos - 4 * text_y_gap, f'MedAE = {MedAE:.2f} ({MedAE_percent:.2f}%)',
                  fontsize=11, color='black')
+        plt.text(text_x_pos, text_y_start_pos - 5 * text_y_gap, f'IoU = {iou:.2f}%',fontsize=11, color='black')
 
+        ## Save metrics to txt file
+        base, ext = os.path.splitext(out_fn)
+        txt_out = base + ".txt"
+        lines_to_write = [
+        f"OLS: {equation}\n",
+        f"Theil Sen: {ts_equation}\n",
+        f"Samples = {len(X)}\n",
+        f"R^2 = {r_squared:.4f}\n",
+        f"MedAE = {MedAE:.2f} ({MedAE_percent:.2f}%)\n",
+        f"MAE = {MAE:.2f} ({MAE_percent:.2f}%)\n",
+        f"IoU : {iou:.2f}%\n",
+        f"Agreement : {agree:.2f}\n",
+        f"Difference : {difference:.2f}\n",
+        ]
+
+        with open(txt_out, "w") as file:
+            file.writelines(lines_to_write)
+      
         # x, yticks
         plt.yticks(fontsize=10, color='dimgrey')
         plt.xticks(fontsize=10, color='dimgrey')
 
         # Save the plot
         plt.savefig(out_fn)
+
+        ## html
+        # Build Plotly figure
+        fig = go.Figure()
+
+        # Hover 
+        fig.add_trace(go.Scatter(
+            x=X, y=Y, mode="markers",
+            name="Cells",
+            customdata=np.stack([ids, X, Y, agree_arr, distance_arr], axis=-1), #diff_arr
+            hovertemplate="ID: %{customdata[0]}<br>Actual: %{x:.2f} ha<br>Predicted: %{y:.2f} ha<br>Agreement: %{customdata[3]}<br>Difference: %{customdata[4]}<br><extra></extra>",
+            marker=dict(size=8, line=dict(width=0.5), color="steelblue", opacity=0.5), showlegend=False
+        ))
+
+        # OLS line trace
+        fig.add_trace(go.Scatter(
+        x=X_extended, y=trend_line, mode="lines",
+        name="OLS Line",
+        line=dict(color="mediumseagreen", dash="solid")
+        , hoverinfo="skip", hovertemplate=None
+        ))
+
+        # Theil–Sen line trace
+        fig.add_trace(go.Scatter(
+        x=X_extended, y=y_pred, mode="lines",
+        name="Theil–Sen Line",
+        line=dict(color="orange", dash="solid")
+        , hoverinfo="skip", hovertemplate=None
+        ))
+
+        # 1:1 line trace
+        fig.add_trace(go.Scatter(
+        x=X_extended, y=one_to_one_line, mode="lines",
+        name="1:1 Line",
+        line=dict(color="crimson", dash="dash")
+        , hoverinfo="skip", hovertemplate=None
+        ))
+
+        # Layout setting
+        fig.update_layout(
+        title=dict(
+            text=f"<b>{title}</b>",
+            font=dict(color="firebrick", size=20),
+            x=0.5, xanchor="center"
+        ),
+        xaxis=dict(
+            title=dict(text="<b>Actual Deforestation (ha)</b>",
+                    font=dict(color="black"),
+                    standoff=10),                 
+            tickfont=dict(size=10, color="dimgrey"),
+            range=[0, xmax],
+            constrain="domain"
+        ),
+        yaxis=dict(
+            title=dict(text="<b>Predicted Deforestation (ha)</b>",
+                    font=dict(color="black"),
+                    standoff=10),
+            tickfont=dict(size=10, color="dimgrey"),
+            range=[0, ymax]
+        ),
+        hovermode="closest",
+        legend=dict(                    
+            x=0.99, y=0.01, xanchor="right", yanchor="bottom", orientation="v"
+        ),
+        margin=dict(l=60, r=30, t=80, b=60),
+        paper_bgcolor= 'rgb(255,255,255)',
+        plot_bgcolor=  'rgb(234,234,242)',
+        )
+
+        # Annotations 
+        stats_text = (
+            f"Theil–Sen: {ts_equation}<br>"
+            f"OLS: {equation}<br>"
+            f"Samples = {len(X)}<br>"
+            f"R² = {r_squared:.4f}<br>"
+            f"MedAE = {MedAE:.2f} ({MedAE_percent:.2f}%)<br>"
+            f"IoU = {iou:.2f}%<br>"
+        )
+        
+        fig.add_annotation(
+            x=0.02, y=0.98, xref="paper", yref="paper", xanchor="left", yanchor="top",
+            text=stats_text, showarrow=False, align="left"
+        )
+
+        # Save a HTML
+        html_out = base + ".html"
+        
+        pio.write_html(fig, file=html_out, include_plotlyjs=True, full_html=True)
+
         return
 
     def remove_temp_files(self):
