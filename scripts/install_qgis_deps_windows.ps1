@@ -1,6 +1,8 @@
 param(
     [string]$QgisPythonPath = "",
-    [string]$RequirementsPath = "requirements/windows-qgis.txt"
+    [string]$RequirementsPath = "requirements/windows-qgis.txt",
+    [switch]$ForceInstall,
+    [switch]$UpgradePackagingTools
 )
 
 $ErrorActionPreference = "Stop"
@@ -31,11 +33,30 @@ if (-not (Test-Path $requirementsFullPath)) {
 }
 
 $qgisPython = Resolve-QgisPython -PathHint $QgisPythonPath
+$verifyScriptPath = Join-Path $repoRoot "scripts\verify_qgis_deps.py"
 Write-Host "Using QGIS Python launcher: $qgisPython"
 Write-Host "Requirements file: $requirementsFullPath"
 
-& $qgisPython -m pip install --upgrade pip setuptools wheel
-& $qgisPython -m pip install -r $requirementsFullPath
-& $qgisPython (Join-Path $repoRoot "scripts\verify_qgis_deps.py")
+if (-not $ForceInstall) {
+    Write-Host "Verifying whether dependencies are already available..."
+    & $qgisPython $verifyScriptPath
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "Dependencies already available. No installation needed."
+        return
+    }
+
+    Write-Host "One or more dependencies are missing. Installing requirements..."
+}
+
+if ($UpgradePackagingTools) {
+    & $qgisPython -m pip install --disable-pip-version-check --upgrade pip setuptools wheel
+}
+
+& $qgisPython -m pip install --disable-pip-version-check --upgrade-strategy only-if-needed --prefer-binary -r $requirementsFullPath
+& $qgisPython $verifyScriptPath
+
+if ($LASTEXITCODE -ne 0) {
+    throw "Dependency verification failed after installation."
+}
 
 Write-Host "Dependency installation and verification completed."
