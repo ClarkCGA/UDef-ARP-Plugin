@@ -63,9 +63,19 @@ If QGIS is installed in a non-default location, provide the launcher path explic
 ```
 
 This script will:
-- upgrade pip/setuptools/wheel in QGIS Python,
-- install required packages from `requirements/windows-qgis.txt`,
+- verify whether dependencies are already available,
+- install required packages from `requirements/windows-qgis.txt` only when needed,
 - verify imports using `scripts/verify_qgis_deps.py`.
+
+Advanced options:
+
+```powershell
+./scripts/install_qgis_deps_windows.ps1 -ForceInstall
+./scripts/install_qgis_deps_windows.ps1 -UpgradePackagingTools
+```
+
+Use `-ForceInstall` to re-run package installation even when imports already succeed.
+Use `-UpgradePackagingTools` only when you specifically need to update pip/setuptools/wheel inside QGIS Python.
 
 ## Cross-Platform Path (Future)
 Current priority is Windows stability. For Linux/macOS support, use staged rollout:
