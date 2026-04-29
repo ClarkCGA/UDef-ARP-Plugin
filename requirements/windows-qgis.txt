@@ -1,0 +1,11 @@
+# External Python dependencies required by UDef-ARP Plugin when running inside QGIS Python.
+# Install these into the QGIS Python environment using scripts/install_qgis_deps_windows.ps1.
+
+numpy
+pandas
+scipy
+matplotlib
+seaborn
+shapely
+geopandas
+plotly
