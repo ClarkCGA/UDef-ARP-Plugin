@@ -44,6 +44,39 @@ Use the following command and a package name to install packages to your QGIS py
 ```
 pip install package_name
 ```
+
+### Recommended Windows Install Pipeline
+The plugin is most reliable when dependencies are installed into the QGIS Python environment before first use.
+
+1. Clone this repository locally.
+2. Open Windows PowerShell.
+3. Run the installer script from the repository root:
+
+```powershell
+./scripts/install_qgis_deps_windows.ps1
+```
+
+If QGIS is installed in a non-default location, provide the launcher path explicitly:
+
+```powershell
+./scripts/install_qgis_deps_windows.ps1 -QgisPythonPath "C:\Program Files\QGIS 3.30.1\bin\python-qgis.bat"
+```
+
+This script will:
+- upgrade pip/setuptools/wheel in QGIS Python,
+- install required packages from `requirements/windows-qgis.txt`,
+- verify imports using `scripts/verify_qgis_deps.py`.
+
+## Cross-Platform Path (Future)
+Current priority is Windows stability. For Linux/macOS support, use staged rollout:
+
+1. Add per-platform dependency files:
+  - `requirements/linux-qgis.txt`
+  - `requirements/macos-qgis.txt`
+2. Add platform installer scripts similar to the Windows installer.
+3. Add a lightweight startup dependency check in plugin initialization with actionable error guidance.
+4. Validate against specific QGIS LTR versions per platform and publish a compatibility matrix.
+
 ## Before You Start
 ### Step 1: Open QGIS
 Open the QGIS GUI.
