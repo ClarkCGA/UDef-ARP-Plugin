@@ -59,17 +59,17 @@ from .model_evaluation import ModelEvaluation
 gdal.UseExceptions()
 
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
-FORM_CLASS0, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'data\\intro_screen.ui'))
-FORM_CLASS1, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'data\\rmt_fit_cal_screen_Dev.ui'))
-FORM_CLASS2, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'data\\at_fit_cal_screen_Dev.ui'))
-FORM_CLASS3, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'data\\mct_fit_cal_screen_Dev.ui'))
-FORM_CLASS4, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'data\\rmt_pre_cnf_screen_Dev.ui'))
-FORM_CLASS5, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'data\\at_pre_cnf_screen_Dev.ui'))
-FORM_CLASS6, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'data\\mct_pre_cnf_screen_Dev.ui'))
-FORM_CLASS7, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'data\\rmt_fit_hrp_screen_Dev.ui'))
-FORM_CLASS8, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'data\\at_fit_hrp_screen_Dev.ui'))
-FORM_CLASS9, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'data\\rmt_pre_vp_screen_Dev.ui'))
-FORM_CLASS10, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'data\\at_pre_vp_screen_Dev.ui'))
+FORM_CLASS0, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'data', 'intro_screen.ui'))
+FORM_CLASS1, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'data', 'rmt_fit_cal_screen_Dev.ui'))
+FORM_CLASS2, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'data', 'at_fit_cal_screen_Dev.ui'))
+FORM_CLASS3, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'data', 'mct_fit_cal_screen_Dev.ui'))
+FORM_CLASS4, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'data', 'rmt_pre_cnf_screen_Dev.ui'))
+FORM_CLASS5, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'data', 'at_pre_cnf_screen_Dev.ui'))
+FORM_CLASS6, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'data', 'mct_pre_cnf_screen_Dev.ui'))
+FORM_CLASS7, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'data', 'rmt_fit_hrp_screen_Dev.ui'))
+FORM_CLASS8, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'data', 'at_fit_hrp_screen_Dev.ui'))
+FORM_CLASS9, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'data', 'rmt_pre_vp_screen_Dev.ui'))
+FORM_CLASS10, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'data', 'at_pre_vp_screen_Dev.ui'))
 
 # Define the style sheet for the combo box
 style_sheet = """
@@ -123,7 +123,7 @@ class IntroScreen(QtWidgets.QDialog, FORM_CLASS0):
         stacked_widget.setCurrentIndex(stacked_widget.currentIndex() + 1)
 
     def openDocument(self):
-        pdf_path = os.path.join(os.path.dirname(__file__), 'doc\\UDef-ARP_Introduction.pdf')
+        pdf_path = os.path.join(os.path.dirname(__file__), 'doc', 'UDef-ARP_Introduction.pdf')
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(pdf_path)))
 
 ######################################################################################################
@@ -245,11 +245,11 @@ class RMT_FIT_CAL_SCREEN(QtWidgets.QDialog, FORM_CLASS1):
         stacked_widget.setCurrentIndex(stacked_widget.currentIndex() + 1)
 
     def openDocument(self):
-        pdf_path = os.path.join(os.path.dirname(__file__), "doc\\TestFitVM.pdf")
+        pdf_path = os.path.join(os.path.dirname(__file__), 'doc', 'TestFitVM.pdf')
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(pdf_path)))
 
     def openDocument_2(self):
-        pdf_path = os.path.join(os.path.dirname(__file__), "doc\\TestFitVM.pdf")
+        pdf_path = os.path.join(os.path.dirname(__file__), 'doc', 'TestFitVM.pdf')
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(pdf_path)))
 
     def select_working_directory(self):
@@ -621,7 +621,7 @@ class AT_FIT_CAL_SCREEN(QtWidgets.QDialog, FORM_CLASS2):
         stacked_widget.setCurrentIndex(stacked_widget.currentIndex() + 1)
 
     def openDocument(self):
-        pdf_path = os.path.join(os.path.dirname(__file__), "doc\\TestFitAM.pdf")
+        pdf_path = os.path.join(os.path.dirname(__file__), 'doc', 'TestFitAM.pdf')
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(pdf_path)))
 
     def select_working_directory(self):
@@ -834,7 +834,7 @@ class MCT_FIT_CAL_SCREEN(QtWidgets.QDialog, FORM_CLASS3):
         stacked_widget.setCurrentIndex(stacked_widget.currentIndex() + 1)
 
     def openDocument(self):
-        pdf_path = os.path.join(os.path.dirname(__file__), "doc\\TestFitMA.pdf")
+        pdf_path = os.path.join(os.path.dirname(__file__), 'doc', 'TestFitMA.pdf')
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(pdf_path)))
 
     def select_working_directory(self):
@@ -1107,11 +1107,11 @@ class RMT_PRE_CNF_SCREEN(QtWidgets.QDialog, FORM_CLASS4):
         stacked_widget.setCurrentIndex(stacked_widget.currentIndex() + 1)
 
     def openDocument(self):
-        pdf_path = os.path.join(os.path.dirname(__file__), "doc\\TestPreVM.pdf")
+        pdf_path = os.path.join(os.path.dirname(__file__), 'doc', 'TestPreVM.pdf')
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(pdf_path)))
 
     def openDocument_2(self):
-        pdf_path = os.path.join(os.path.dirname(__file__), "doc\\TestPreVM.pdf")
+        pdf_path = os.path.join(os.path.dirname(__file__), 'doc', 'TestPreVM.pdf')
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(pdf_path)))
 
     def select_working_directory(self):
@@ -1398,7 +1398,7 @@ class AT_PRE_CNF_SCREEN(QtWidgets.QDialog, FORM_CLASS5):
         stacked_widget.setCurrentIndex(stacked_widget.currentIndex() + 1)
 
     def openDocument(self):
-        pdf_path = os.path.join(os.path.dirname(__file__), "doc\\TestPreAM.pdf")
+        pdf_path = os.path.join(os.path.dirname(__file__), 'doc', 'TestPreAM.pdf')
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(pdf_path)))
 
     def select_working_directory(self):
@@ -1626,7 +1626,7 @@ class MCT_PRE_CNF_SCREEN(QtWidgets.QDialog, FORM_CLASS6):
         stacked_widget.setCurrentIndex(stacked_widget.currentIndex() + 1)
 
     def openDocument(self):
-        pdf_path = os.path.join(os.path.dirname(__file__), "doc\\TestPreMA.pdf")
+        pdf_path = os.path.join(os.path.dirname(__file__), 'doc', 'TestPreMA.pdf')
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(pdf_path)))
 
     def select_working_directory(self):
@@ -1928,11 +1928,11 @@ class RMT_FIT_HRP_SCREEN(QtWidgets.QDialog, FORM_CLASS7):
         stacked_widget.setCurrentIndex(stacked_widget.currentIndex() + 1)
 
     def openDocument(self):
-        pdf_path = os.path.join(os.path.dirname(__file__), "doc\\AppFitVM.pdf")
+        pdf_path = os.path.join(os.path.dirname(__file__), 'doc', 'AppFitVM.pdf')
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(pdf_path)))
 
     def openDocument_2(self):
-        pdf_path = os.path.join(os.path.dirname(__file__), "doc\\AppFitVM.pdf")
+        pdf_path = os.path.join(os.path.dirname(__file__), 'doc', 'AppFitVM.pdf')
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(pdf_path)))
 
     def select_working_directory(self):
@@ -2211,7 +2211,7 @@ class AT_FIT_HRP_SCREEN(QtWidgets.QDialog, FORM_CLASS8):
         stacked_widget.setCurrentIndex(stacked_widget.currentIndex() + 1)
 
     def openDocument(self):
-        pdf_path = os.path.join(os.path.dirname(__file__), "doc\\AppFitAM.pdf")
+        pdf_path = os.path.join(os.path.dirname(__file__), 'doc', 'AppFitAM.pdf')
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(pdf_path)))
 
     def select_working_directory(self):
@@ -2440,11 +2440,11 @@ class RMT_PRE_VP_SCREEN(QtWidgets.QDialog, FORM_CLASS9):
         stacked_widget.setCurrentIndex(stacked_widget.currentIndex() + 1)
 
     def openDocument(self):
-        pdf_path = os.path.join(os.path.dirname(__file__), "doc\\AppPreVM.pdf")
+        pdf_path = os.path.join(os.path.dirname(__file__), 'doc', 'AppPreVM.pdf')
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(pdf_path)))
 
     def openDocument_2(self):
-        pdf_path = os.path.join(os.path.dirname(__file__), "doc\\AppPreVM.pdf")
+        pdf_path = os.path.join(os.path.dirname(__file__), 'doc', 'AppPreVM.pdf')
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(pdf_path)))
 
     def select_working_directory(self):
@@ -2722,7 +2722,7 @@ class AT_PRE_VP_SCREEN(QtWidgets.QDialog, FORM_CLASS10):
         stacked_widget.setCurrentIndex(stacked_widget.currentIndex() + 1)
 
     def openDocument(self):
-        pdf_path = os.path.join(os.path.dirname(__file__), "doc\\AppPreAM.pdf")
+        pdf_path = os.path.join(os.path.dirname(__file__), 'doc', 'AppPreAM.pdf')
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(pdf_path)))
 
     def select_working_directory(self):
