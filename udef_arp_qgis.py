@@ -1029,7 +1029,9 @@ class RMT_PRE_CNF_SCREEN(QtWidgets.QDialog, FORM_CLASS4):
         self.doc_button = self.tab1.findChild(QWidget, "doc_button")
         self.select_folder_button = self.tab1.findChild(QWidget, "select_folder_button")
         self.fd_button = self.tab1.findChild(QWidget, "fd_button")
+        self.mask_button = self.tab1.findChild(QWidget, "mask_button")
         self.ok_button2 = self.tab1.findChild(QWidget, "ok_button2")
+        self.mask_entry = self.tab1.findChild(QWidget, "mask_entry")
 
         self.doc_button_2 = self.tab2.findChild(QWidget, "doc_button_2")
         self.select_folder_button_2 = self.tab2.findChild(QWidget, "select_folder_button_2")
@@ -1041,6 +1043,7 @@ class RMT_PRE_CNF_SCREEN(QtWidgets.QDialog, FORM_CLASS4):
         self.doc_button.clicked.connect(self.openDocument)
         self.select_folder_button.clicked.connect(self.select_working_directory)
         self.fd_button.clicked.connect(lambda: self.selectRaster(self.in_fn_entry, 'Map of Distance from the Forest Edge in CNF'))
+        self.mask_button.clicked.connect(lambda: self.selectRaster(self.mask_entry, 'Mask of Study Area'))
         self.ok_button2.clicked.connect(self.process_data2)
 
         self.doc_button_2.clicked.connect(self.openDocument_2)
@@ -1054,6 +1057,7 @@ class RMT_PRE_CNF_SCREEN(QtWidgets.QDialog, FORM_CLASS4):
         self.vulnerability_map.progress_updated.connect(self.update_progress)
         self.directory = None
         self.in_fn = None
+        self.mask = None
         self.NRT = None
         # Use NRT from the data store
         if central_data_store.NRT is not None:
@@ -1074,16 +1078,19 @@ class RMT_PRE_CNF_SCREEN(QtWidgets.QDialog, FORM_CLASS4):
 
         # Provide intitial settings for each comboBox
         self.in_fn_entry.setStyleSheet(style_sheet)
+        self.mask_entry.setStyleSheet(style_sheet)
         self.in_fn_entry_2.setStyleSheet(style_sheet)
         self.fmask_entry_2.setStyleSheet(style_sheet)
         self.mask_entry_2.setStyleSheet(style_sheet)
         
         self.in_fn_entry.setCurrentIndex(-1)
+        self.mask_entry.setCurrentIndex(-1)
         self.in_fn_entry_2.setCurrentIndex(-1)
         self.fmask_entry_2.setCurrentIndex(-1)
         self.mask_entry_2.setCurrentIndex(-1)
         
         self.in_fn_entry.setFilters(QgsMapLayerProxyModel.RasterLayer)
+        self.mask_entry.setFilters(QgsMapLayerProxyModel.RasterLayer)
         self.in_fn_entry_2.setFilters(QgsMapLayerProxyModel.RasterLayer)
         self.fmask_entry_2.setFilters(QgsMapLayerProxyModel.RasterLayer)
         self.mask_entry_2.setFilters(QgsMapLayerProxyModel.RasterLayer)
@@ -1149,9 +1156,14 @@ class RMT_PRE_CNF_SCREEN(QtWidgets.QDialog, FORM_CLASS4):
             self.in_fn = self.in_fn_entry.currentLayer().source()
         except Exception:
             self.in_fn = self.in_fn_entry.currentText()
+
+        try:
+            self.mask = self.mask_entry.currentLayer().source()
+        except Exception:
+            self.mask = self.mask_entry.currentText()
             
-        if not self.in_fn:
-            QMessageBox.critical(self, "Error", "Please select the input file!")
+        if not self.in_fn or not self.mask:
+            QMessageBox.critical(self, "Error", "Please select all input files!")
             return
 
         NRT = self.nrt_entry.text()
@@ -1192,6 +1204,11 @@ class RMT_PRE_CNF_SCREEN(QtWidgets.QDialog, FORM_CLASS4):
                                  "Please enter .rst or .tif extension in the name of Vulnerability Map in CNF!")
             return
 
+        if not map_checker.check_binary_map(self.mask):
+            QMessageBox.critical(None, "Error",
+                                 "'MASK OF THE NON-EXCLUDED JURISDICTION' must be a binary map (0 and 1) where the 1’s indicate areas inside the jurisdiction.")
+            return
+
         # Show "Processing" message
         processing_message = "Processing data..."
         self.progressDialog = QProgressDialog(processing_message, None, 0, 100, self)
@@ -1210,11 +1227,7 @@ class RMT_PRE_CNF_SCREEN(QtWidgets.QDialog, FORM_CLASS4):
 
         try:
             self.vulnerability_map.set_working_directory(directory)
-            mask = central_data_store.mask
-            if not mask:
-                QMessageBox.critical(self, "Error", "No stored jurisdiction mask found. Run FIT CAL NRT first.")
-                return
-            mask_arr = self.vulnerability_map.geometric_classification(self.in_fn, NRT, n_classes, mask)
+            mask_arr = self.vulnerability_map.geometric_classification(self.in_fn, NRT, n_classes, self.mask)
             self.vulnerability_map.array_to_image(self.in_fn, out_fn, mask_arr, gdal.GDT_Int16, -1)
             self.vulnerability_map.replace_ref_system(self.in_fn, out_fn)
 
@@ -1857,7 +1870,9 @@ class RMT_FIT_HRP_SCREEN(QtWidgets.QDialog, FORM_CLASS7):
         self.doc_button = self.tab1.findChild(QWidget, "doc_button")
         self.select_folder_button = self.tab1.findChild(QWidget, "select_folder_button")
         self.fd_button = self.tab1.findChild(QWidget, "fd_button")
+        self.mask_button = self.tab1.findChild(QWidget, "mask_button")
         self.ok_button2 = self.tab1.findChild(QWidget, "ok_button2")
+        self.mask_entry = self.tab1.findChild(QWidget, "mask_entry")
 
         self.doc_button_2 = self.tab2.findChild(QWidget, "doc_button_2")
         self.select_folder_button_2 = self.tab2.findChild(QWidget, "select_folder_button_2")
@@ -1869,6 +1884,7 @@ class RMT_FIT_HRP_SCREEN(QtWidgets.QDialog, FORM_CLASS7):
         self.doc_button.clicked.connect(self.openDocument)
         self.select_folder_button.clicked.connect(self.select_working_directory)
         self.fd_button.clicked.connect(lambda: self.selectRaster(self.in_fn_entry, 'Map of Distance from the Forest Edge in HRP'))
+        self.mask_button.clicked.connect(lambda: self.selectRaster(self.mask_entry, 'Mask of Study Area'))
         self.ok_button2.clicked.connect(self.process_data2)
 
         self.doc_button_2.clicked.connect(self.openDocument_2)
@@ -1882,6 +1898,7 @@ class RMT_FIT_HRP_SCREEN(QtWidgets.QDialog, FORM_CLASS7):
         self.vulnerability_map.progress_updated.connect(self.update_progress)
         self.directory = None
         self.in_fn = None
+        self.mask = None
         self.NRT = None
         if central_data_store.NRT is not None:
             self.nrt_entry.setText(str(central_data_store.NRT))
@@ -1901,16 +1918,19 @@ class RMT_FIT_HRP_SCREEN(QtWidgets.QDialog, FORM_CLASS7):
 
         # Provide intitial settings for each comboBox
         self.in_fn_entry.setStyleSheet(style_sheet)
+        self.mask_entry.setStyleSheet(style_sheet)
         self.in_fn_entry_2.setStyleSheet(style_sheet)
         self.fmask_entry_2.setStyleSheet(style_sheet)
         self.mask_entry_2.setStyleSheet(style_sheet)
         
         self.in_fn_entry.setCurrentIndex(-1)
+        self.mask_entry.setCurrentIndex(-1)
         self.in_fn_entry_2.setCurrentIndex(-1)
         self.fmask_entry_2.setCurrentIndex(-1)
         self.mask_entry_2.setCurrentIndex(-1)
         
         self.in_fn_entry.setFilters(QgsMapLayerProxyModel.RasterLayer)
+        self.mask_entry.setFilters(QgsMapLayerProxyModel.RasterLayer)
         self.in_fn_entry_2.setFilters(QgsMapLayerProxyModel.RasterLayer)
         self.fmask_entry_2.setFilters(QgsMapLayerProxyModel.RasterLayer)
         self.mask_entry_2.setFilters(QgsMapLayerProxyModel.RasterLayer)
@@ -1970,9 +1990,14 @@ class RMT_FIT_HRP_SCREEN(QtWidgets.QDialog, FORM_CLASS7):
             self.in_fn = self.in_fn_entry.currentLayer().source()
         except Exception:
             self.in_fn = self.in_fn_entry.currentText()
+
+        try:
+            self.mask = self.mask_entry.currentLayer().source()
+        except Exception:
+            self.mask = self.mask_entry.currentText()
             
-        if not self.in_fn:
-            QMessageBox.critical(self, "Error", "Please select the input file!")
+        if not self.in_fn or not self.mask:
+            QMessageBox.critical(self, "Error", "Please select all input files!")
             return
 
         NRT = self.nrt_entry.text()
@@ -2013,6 +2038,11 @@ class RMT_FIT_HRP_SCREEN(QtWidgets.QDialog, FORM_CLASS7):
                                  "Please enter .rst or .tif extension in the name of Vulnerability Map in HRP!")
             return
 
+        if not map_checker.check_binary_map(self.mask):
+            QMessageBox.critical(None, "Error",
+                                 "'MASK OF THE NON-EXCLUDED JURISDICTION' must be a binary map (0 and 1) where the 1’s indicate areas inside the jurisdiction.")
+            return
+
         # Show "Processing" message
         processing_message = "Processing data..."
         self.progressDialog = QProgressDialog(processing_message, None, 0, 100, self)
@@ -2031,11 +2061,7 @@ class RMT_FIT_HRP_SCREEN(QtWidgets.QDialog, FORM_CLASS7):
 
         try:
             self.vulnerability_map.set_working_directory(directory)
-            mask = central_data_store.mask
-            if not mask:
-                QMessageBox.critical(self, "Error", "No stored jurisdiction mask found. Run FIT CAL NRT first.")
-                return
-            mask_arr = self.vulnerability_map.geometric_classification(self.in_fn, NRT, n_classes, mask)
+            mask_arr = self.vulnerability_map.geometric_classification(self.in_fn, NRT, n_classes, self.mask)
             self.vulnerability_map.array_to_image(self.in_fn, out_fn, mask_arr, gdal.GDT_Int16, -1)
             self.vulnerability_map.replace_ref_system(self.in_fn, out_fn)
 
@@ -2369,7 +2395,9 @@ class RMT_PRE_VP_SCREEN(QtWidgets.QDialog, FORM_CLASS9):
         self.doc_button = self.tab1.findChild(QWidget, "doc_button")
         self.select_folder_button = self.tab1.findChild(QWidget, "select_folder_button")
         self.fd_button = self.tab1.findChild(QWidget, "fd_button")
+        self.mask_button = self.tab1.findChild(QWidget, "mask_button")
         self.ok_button2 = self.tab1.findChild(QWidget, "ok_button2")
+        self.mask_entry = self.tab1.findChild(QWidget, "mask_entry")
 
         self.doc_button_2 = self.tab2.findChild(QWidget, "doc_button_2")
         self.select_folder_button_2 = self.tab2.findChild(QWidget, "select_folder_button_2")
@@ -2381,6 +2409,7 @@ class RMT_PRE_VP_SCREEN(QtWidgets.QDialog, FORM_CLASS9):
         self.doc_button.clicked.connect(self.openDocument)
         self.select_folder_button.clicked.connect(self.select_working_directory)
         self.fd_button.clicked.connect(lambda: self.selectRaster(self.in_fn_entry, 'Map of Distance from the Forest Edge in VP'))
+        self.mask_button.clicked.connect(lambda: self.selectRaster(self.mask_entry, 'Mask of Study Area'))
         self.ok_button2.clicked.connect(self.process_data2)
 
         self.doc_button_2.clicked.connect(self.openDocument_2)
@@ -2394,6 +2423,7 @@ class RMT_PRE_VP_SCREEN(QtWidgets.QDialog, FORM_CLASS9):
         self.vulnerability_map.progress_updated.connect(self.update_progress)
         self.directory = None
         self.in_fn = None
+        self.mask = None
         self.NRT = None
         if central_data_store.NRT is not None:
             self.nrt_entry.setText(str(central_data_store.NRT))
@@ -2413,16 +2443,19 @@ class RMT_PRE_VP_SCREEN(QtWidgets.QDialog, FORM_CLASS9):
 
         # Provide intitial settings for each comboBox
         self.in_fn_entry.setStyleSheet(style_sheet)
+        self.mask_entry.setStyleSheet(style_sheet)
         self.in_fn_entry_2.setStyleSheet(style_sheet)
         self.fmask_entry_2.setStyleSheet(style_sheet)
         self.mask_entry_2.setStyleSheet(style_sheet)
         
         self.in_fn_entry.setCurrentIndex(-1)
+        self.mask_entry.setCurrentIndex(-1)
         self.in_fn_entry_2.setCurrentIndex(-1)
         self.fmask_entry_2.setCurrentIndex(-1)
         self.mask_entry_2.setCurrentIndex(-1)
         
         self.in_fn_entry.setFilters(QgsMapLayerProxyModel.RasterLayer)
+        self.mask_entry.setFilters(QgsMapLayerProxyModel.RasterLayer)
         self.in_fn_entry_2.setFilters(QgsMapLayerProxyModel.RasterLayer)
         self.fmask_entry_2.setFilters(QgsMapLayerProxyModel.RasterLayer)
         self.mask_entry_2.setFilters(QgsMapLayerProxyModel.RasterLayer)
@@ -2482,9 +2515,14 @@ class RMT_PRE_VP_SCREEN(QtWidgets.QDialog, FORM_CLASS9):
             self.in_fn = self.in_fn_entry.currentLayer().source()
         except Exception:
             self.in_fn = self.in_fn_entry.currentText()
+
+        try:
+            self.mask = self.mask_entry.currentLayer().source()
+        except Exception:
+            self.mask = self.mask_entry.currentText()
             
-        if not self.in_fn:
-            QMessageBox.critical(self, "Error", "Please select the input file!")
+        if not self.in_fn or not self.mask:
+            QMessageBox.critical(self, "Error", "Please select all input files!")
             return
 
         NRT = self.nrt_entry.text()
@@ -2525,6 +2563,11 @@ class RMT_PRE_VP_SCREEN(QtWidgets.QDialog, FORM_CLASS9):
                                  "Please enter .rst or .tif extension in the name of Vulnerability Map in VP!")
             return
 
+        if not map_checker.check_binary_map(self.mask):
+            QMessageBox.critical(None, "Error",
+                                 "'MASK OF THE NON-EXCLUDED JURISDICTION' must be a binary map (0 and 1) where the 1’s indicate areas inside the jurisdiction.")
+            return
+
         # Show "Processing" message
         processing_message = "Processing data..."
         self.progressDialog = QProgressDialog(processing_message, None, 0, 100, self)
@@ -2543,11 +2586,7 @@ class RMT_PRE_VP_SCREEN(QtWidgets.QDialog, FORM_CLASS9):
 
         try:
             self.vulnerability_map.set_working_directory(directory)
-            mask = central_data_store.mask
-            if not mask:
-                QMessageBox.critical(self, "Error", "No stored jurisdiction mask found. Run FIT CAL NRT first.")
-                return
-            mask_arr = self.vulnerability_map.geometric_classification(self.in_fn, NRT, n_classes, mask)
+            mask_arr = self.vulnerability_map.geometric_classification(self.in_fn, NRT, n_classes, self.mask)
             self.vulnerability_map.array_to_image(self.in_fn, out_fn, mask_arr, gdal.GDT_Int16, -1)
             self.vulnerability_map.replace_ref_system(self.in_fn, out_fn)
 
